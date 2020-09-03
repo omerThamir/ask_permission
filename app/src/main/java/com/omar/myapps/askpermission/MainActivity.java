@@ -5,7 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
-import android.content.Intent;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,7 +17,14 @@ public class MainActivity extends AppCompatActivity {
 
 
     Button openConvertToPdfActivity, givePermBtn;
-    private static final int PERMISSION_RC = 5;
+    private static final int One_PERMISSION_RC = 1;
+
+
+    private static final int Multi_PERMISSION_RC = 2;
+    String[] PERMISSIONS = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA
+    };
 
     View permissionDeniedInclude;
 
@@ -35,29 +42,47 @@ public class MainActivity extends AppCompatActivity {
 
         init();
 
+/**         this for asking one permission
+ *       if (!isPermissionGranted()) {
+ permissionDeniedInclude.setVisibility(View.VISIBLE);
+ openConvertToPdfActivity.setVisibility(View.GONE);
+ } else {
+ openConvertToPdfActivity.setVisibility(View.VISIBLE);
+ permissionDeniedInclude.setVisibility(View.GONE);
+ }
+ **/
 
-        if (!isStoragePermissionGranted()) {
-            permissionDeniedInclude.setVisibility(View.VISIBLE);
+        if (!hasPermissions(this, PERMISSIONS)) {
+
             openConvertToPdfActivity.setVisibility(View.GONE);
-            // ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_RC);
+            permissionDeniedInclude.setVisibility(View.VISIBLE);
         } else {
+
             openConvertToPdfActivity.setVisibility(View.VISIBLE);
             permissionDeniedInclude.setVisibility(View.GONE);
         }
 
+
         openConvertToPdfActivity.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-             //   Intent intent = new Intent(MainActivity.this, ProcessingActivity.class);
-            //    startActivity(intent);
-             //   finish();
+                //   Intent intent = new Intent(MainActivity.this, ProcessingActivity.class);
+                //    startActivity(intent);
+                //   finish();
             }
         });
 
         givePermBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_RC);
+                /*** this for one permission
+                 * ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, One_PERMISSION_RC);
+                 ***/
+
+                if (!hasPermissions(MainActivity.this, PERMISSIONS)) {
+                    ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, Multi_PERMISSION_RC);
+                }
+
             }
         });
 
@@ -71,9 +96,10 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public boolean isStoragePermissionGranted() {
+    public boolean isPermissionGranted() {
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            if (checkSelfPermission(Manifest.permission.CAMERA)
                     == PackageManager.PERMISSION_GRANTED) {
                 Log.v("TAG", "Permission is granted");
                 return true;
@@ -94,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         switch (requestCode) {
-            case PERMISSION_RC:
+            case One_PERMISSION_RC:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Log.v("TAGe", "Permission: " + permissions[0] + "was " + grantResults[0]);
 
@@ -104,8 +130,27 @@ public class MainActivity extends AppCompatActivity {
                     //resume tasks needing this permission
                 }// here show dialog
                 break;
-        }
 
+            case Multi_PERMISSION_RC:
+
+                if (hasPermissions(getApplicationContext(), permissions)) {
+                    openConvertToPdfActivity.setVisibility(View.VISIBLE);
+                    permissionDeniedInclude.setVisibility(View.GONE);
+                }
+
+        }
+    }
+
+
+    public boolean hasPermissions(Context context, String... permissions) {
+        if (context != null && permissions != null) {
+            for (String permission : permissions) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
 
